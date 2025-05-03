@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block style %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% endblock %}
+
+{% block title %} {{ group.name }} {% endblock %}
+
+{% block content %}
+        <!-- ✅ ส่วนรายละเอียดกลุ่ม (ซ้าย) -->
+        <div class="group-details">
+            <h1>{{ group.name }}</h1>
+            <p><strong>Description:</strong> {{ group.description }}</p>
+            <p><strong>Created by:</strong> {{ group.created_by.username }}</p>
+            <p><strong>Created on:</strong> {{ group.created_at|date:"d M Y" }}</p>
+            <br>
+            <a href="{% url 'group_admin_dashboard' %}" class="btn-back-home">Back</a>
+            <a href="{% url 'add_member' group.id %}" class="btn-join-group">Add Member</a>
+        </div>
+{% endblock %}
+
+{% block content2 %}
+<div class="member-container">
+  <h2>Member: {{ group.name }}</h2>
+
+  <div id="group-data">
+    {% for member in members %}
+      <div class="member-box" id="member-{{ member.id }}">
+        <p>
+          <strong>{{ member.username }}</strong> |
+          <a href="{% url 'user_profile' member.id %}">View Profile</a>
+        </p>
+        <div class="sensor-title">{{ member.username }}</div>
+        <p>กำลังรอข้อมูลเซ็นเซอร์...</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <script>
+    const socket = new WebSocket("ws://" + window.location.host + "/ws/sensor/");
+    socket.onopen = () => console.log("✅ WebSocket connected");
+    socket.onerror = err => console.error("❌ WebSocket error:", err);
+
+    socket.onmessage = function(e) {
+      const data = JSON.parse(e.data);
+      console.log("🔥 WebSocket:", data);
+
+      const userId = data.user_id;
+      const element = document.getElementById("member-" + userId);
+      if (element) {
+        let riskColor = "#ccc";
+        if (data.risk === "low") riskColor = "#9ae69a";     // 🟩 เขียว
+        else if (data.risk === "medium") riskColor = "#f7e177"; // 🟨 เหลือง
+        else if (data.risk === "high") riskColor = "#f17c7c";   // 🟥 แดง
+
+        element.style.backgroundColor = riskColor;
+        element.innerHTML = `
+  <div class="sensor-title">${data.username || 'ผู้ใช้ ID ' + userId}</div>
+
+  <div style="background-color: ${riskColor}; padding: 0.8rem; border-radius: 8px;">
+    <p><strong>ระดับความเสี่ยง:</strong> ${data.risk.toUpperCase()}</p>
+    <p>อัปเดตล่าสุด: ${data.timestamp}</p>
+    <ul>
+      <li>อัตราการเต้นหัวใจ: ${data.heart_rate} bpm</li>
+      <li>อุณหภูมิผิว: ${data.skin_temperature} °C</li>
+      <li>อุณหภูมิโดยรอบ: ${data.ambient_temperature} °C</li>
+      <li>ความชื้น: ${data.humidity} %</li>
+      <li>ค่าความต้านทานผิวหนัง: ${data.skin_resistance}</li>
+    </ul>
+  </div>
+
+  <a class="profile-btn" href="/profile/${userId}/">ดูโปรไฟล์</a>
+`;
+
+      }
+    };
+  </script>
+  
+</div>
+{% endblock %}
