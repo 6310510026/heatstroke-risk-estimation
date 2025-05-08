@@ -27,7 +27,7 @@ def receive_sensor_data(request):
             ambient_temperature = data.get("ambient_temperature")
             humidity = data.get("humidity")
             skin_resistance = data.get("skin_resistance")
-            risk = data.get("risk", "low")
+            risk = data.get("risk", "normal")
 
             User = get_user_model()
             user = User.objects.get(id=user_id)
@@ -50,6 +50,7 @@ def receive_sensor_data(request):
                     "type": "send_sensor_data",
                     "data": {
                         "user_id": user.id,
+                        "username": user.username,
                         "timestamp": str(sensor_data.timestamp),
                         "heart_rate": sensor_data.heart_rate,
                         "skin_temperature": sensor_data.skin_temperature,

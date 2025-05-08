@@ -137,6 +137,10 @@ def update_profile(request, user_id):
 @csrf_exempt
 @login_required
 def user_profile(request, user_id):
-    User = get_user_model()
-    user = get_object_or_404(User, id=user_id)  # ✅ ดึง user ตาม ID ที่ระบุใน URL
-    return render(request, "user_profile.html", {"user": user})
+    user = get_object_or_404(CustomUser, id=user_id)
+
+    group = None
+    if request.user.role == 'group_admin':
+        group = GroupModel.objects.filter(created_by=request.user).first()  # หรือ logic ที่เหมาะสมกับโมเดลของคุณ
+
+    return render(request, "user_profile.html", {"user": user, "group": group})

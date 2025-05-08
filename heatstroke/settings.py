@@ -149,3 +149,8 @@ LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
 AUTH_USER_MODEL = "level.CustomUser"  # แทนที่ "app_name" ด้วยชื่อแอปของคุณ
 
+MQTT_SERVER = 'vad77f40.ala.asia-southeast1.emqxsl.com'
+MQTT_PORT = 8883
+MQTT_KEEPALIVE = 60
+MQTT_USER = ''
+MQTT_PASSWORD = ''

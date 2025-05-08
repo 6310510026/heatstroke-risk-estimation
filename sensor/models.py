@@ -3,6 +3,7 @@ from django.conf import settings
 
 class SensorData(models.Model):
     RISK_LEVEL_CHOICES = [
+        ('normal', 'ปกติ'),
         ('low', 'ต่ำ'),
         ('medium', 'กลาง'),
         ('high', 'สูง'),

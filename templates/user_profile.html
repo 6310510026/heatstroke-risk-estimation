@@ -24,7 +24,12 @@
 
   </div>
   <br>
+{% if user.id == request.user.id %}
   <a href="{% url 'index' %}" class="btn-back-home">Back</a>
+{% endif %}
 
+{% if user.id != request.user.id %}
+  <a href="{% url 'view_group' group.id %}" class="btn-back-home">Back to Group</a>
+{% endif %}
 
 {% endblock %}

@@ -15,7 +15,14 @@ services:
     environment:
       - DATABASE_URL=postgres://myuser:mypassword@db:5432/mydb  # Add the environment variable for DB connection
 
-
+  mqtt:
+    build: .
+    command: python manage.py mqtt
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      
 
   db:
     image: postgres:13
