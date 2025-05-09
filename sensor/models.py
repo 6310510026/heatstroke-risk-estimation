@@ -7,6 +7,7 @@ class SensorData(models.Model):
         ('low', 'ต่ำ'),
         ('medium', 'กลาง'),
         ('high', 'สูง'),
+        ('🤔?','🤔')
     ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # เชื่อมโยงกับ User
     heart_rate = models.FloatField()  # อัตราการเต้นของหัวใจ

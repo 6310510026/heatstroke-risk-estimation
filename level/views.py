@@ -144,3 +144,28 @@ def user_profile(request, user_id):
         group = GroupModel.objects.filter(created_by=request.user).first()  # หรือ logic ที่เหมาะสมกับโมเดลของคุณ
 
     return render(request, "user_profile.html", {"user": user, "group": group})
+
+
+@csrf_exempt
+@login_required
+def manage_group(request, group_id):
+    User = get_user_model()
+    group = get_object_or_404(GroupModel, id=group_id, created_by=request.user)
+    members = group.members.all()
+    return render(request, 'manage_group.html', {
+        'group': group,
+        'members': members
+    })
+
+
+@csrf_exempt
+@login_required
+def delete_member(request, group_id, member_id):
+    User = get_user_model()
+    group = get_object_or_404(GroupModel, id=group_id, created_by=request.user)
+    member = get_object_or_404(User, id=member_id)
+
+    if request.method == "POST":
+        group.members.remove(member)
+        return redirect('manage_group', group_id=group.id)
+

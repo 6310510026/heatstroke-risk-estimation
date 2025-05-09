@@ -54,10 +54,17 @@
             <br>
             <a href="{% url 'group_admin_dashboard' %}" class="btn-back-home">Back</a>
             <a href="{% url 'add_member' group.id %}" class="btn-join-group">Add Member</a>
+            <!-- ช่วยเพิ่มปุ่ม manage group สำหรับให้ admin-group ลบสมาชิก ในกลุ่มได้ -->
+            {% if request.user == group.created_by %}
+            <a href="{% url 'manage_group' group.id %}" class="btn-join-group">Manage Group</a>
+            {% endif %}
+          
+            
         </div>
 {% endblock %}
 
 {% block content2 %}
+<div class="content2" id="content2">
 <h2>Member: {{ group.name }}</h2>
 <div class="member-grid" id="group-data">
   {% for member in members %}
@@ -65,6 +72,8 @@
       <div class="sensor-title">{{ member.username }}</div>
       <p>Loading...</p>
       <a class="profile-btn" href="{% url 'user_profile' member.id %}">View Profile</a>
+      <!-- เพิ่มปุ่มสำหรับดูข้อมูลย้อนหลังของ member -->
+      <a class="profile-btn" href="{% url 'sensor:display_data' %}?user_id={{ member.id }}">View History</a>
     </div>
   {% endfor %}
 </div>
@@ -105,5 +114,6 @@
     }
   };
 </script>
+</div>
 {% endblock %}
 

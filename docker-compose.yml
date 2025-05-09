@@ -3,7 +3,8 @@ version: '3.8'
 services:
   web:
     build: .
-    command: ["gunicorn", "heatstroke.asgi:application", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
+    command: >
+      sh -c "python manage.py migrate && gunicorn heatstroke.asgi:application -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000"
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
@@ -22,7 +23,9 @@ services:
       - .:/app
     depends_on:
       - db
-      
+      - redis
+    environment:
+      - DATABASE_URL=postgres://myuser:mypassword@db:5432/mydb  # Add the environment variable for DB connection
 
   db:
     image: postgres:13

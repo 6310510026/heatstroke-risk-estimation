@@ -4,7 +4,7 @@
 {% block title %} Display Data {% endblock %}
 
 {% block style %}
-    <!-- Include Plotly.js library -->
+    <!-- Include Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 
     <!-- Include Flatpickr -->
@@ -14,85 +14,85 @@
 {% endblock %}
 
 {% block content %}
+  <div class="display_data">
+    <h2>ข้อมูลย้อนหลัง 7 วันของ {{ target_user.username }}</h2>
 
-    <div class="display_data">
-        <h2>ข้อมูลย้อนหลัง 7 วัน</h2>
+    <!-- ✅ กราฟ -->
+    <div id="heartRatePlot" style="margin-bottom: 30px;"></div>
+    <div id="temperaturePlot" style="margin-bottom: 30px;"></div>
+    <div id="bodyTempPlot" style="margin-bottom: 30px;"></div>
+    <div id="humidityPlot" style="margin-bottom: 30px;"></div>
+    <div id="riskPlot" style="margin-bottom: 30px;"></div>
 
+    <!-- ✅ ข้อมูลแบบรายการ -->
     {% if sensor_data %}
-        <ul>
+      <ul>
         {% for data in sensor_data %}
-            <li>
-                <strong>{{ data.timestamp|date:"Y-m-d H:i" }}</strong><br>
-                HR: {{ data.heart_rate }} bpm<br>
-                Skin Temp: {{ data.skin_temperature }} °C<br>
-                Ambient Temp: {{ data.ambient_temperature }} °C<br>
-                Humidity: {{ data.humidity }} %
-                Skin Resistance: {{ data.skin_resistance }}<br>
-                Risk: {{ data.risk|title }}
-            </li>
-            <hr>
+          <li>
+            <strong>{{ data.timestamp|date:"Y-m-d H:i" }}</strong><br>
+            HR: {{ data.heart_rate }} bpm<br>
+            Skin Temp: {{ data.skin_temperature }} °C<br>
+            Ambient Temp: {{ data.ambient_temperature }} °C<br>
+            Humidity: {{ data.humidity }} %<br>
+            Skin Resistance: {{ data.skin_resistance }}<br>
+            Risk: {{ data.risk|title }}
+          </li>
+          <hr>
         {% endfor %}
-        </ul>
+      </ul>
     {% else %}
-        <p>ยังไม่มีข้อมูลเซ็นเซอร์ในช่วง 7 วันที่ผ่านมา</p>
+      <p>ยังไม่มีข้อมูลเซ็นเซอร์ในช่วง 7 วันที่ผ่านมา</p>
     {% endif %}
-    </div>
+  </div>
+  <script>
+    // ✅ ฟังก์ชัน plot ทั่วไป
+    function createLinePlot(divId, xData, yData, xTitle, yTitle, title) {
+      var trace = {
+        x: xData,
+        y: yData,
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { shape: 'spline' }
+      };
+      var layout = {
+        title: title,
+        xaxis: { title: xTitle },
+        yaxis: { title: yTitle },
+        margin: { t: 40 }
+      };
+      Plotly.newPlot(divId, [trace], layout);
+    }
+
+    // ✅ สร้างกราฟต่าง ๆ
+    createLinePlot('temperaturePlot', {{ timestamps|default:"[]"|safe }}, {{ temperatures|default:"[]"|safe }}, 'Time', 'Ambient Temp (°C)', 'Ambient Temperature');
+    createLinePlot('humidityPlot', {{ timestamps|default:"[]"|safe }}, {{ humidity_values|default:"[]"|safe }}, 'Time', 'Humidity (%)', 'Humidity');
+    createLinePlot('bodyTempPlot', {{ timestamps|default:"[]"|safe }}, {{ body_temps|default:"[]"|safe }}, 'Time', 'Skin Temp (°C)', 'Body Temperature');
+    createLinePlot('heartRatePlot', {{ timestamps|default:"[]"|safe }}, {{ heart_rates|default:"[]"|safe }}, 'Time', 'Heart Rate (bpm)', 'Heart Rate');
+
+    // ✅ Risk Graph
+    var trace = {
+      x: {{ timestamps|safe }},
+      y: {{ risks|safe }},
+      mode: 'lines+markers',
+      type: 'scatter'
+    };
+    var layout = {
+        title: 'Risk',
+        xaxis: { title: 'Time' },
+        yaxis: {
+          title: 'Risk Level',
+          range: [-0.5, 3.5],
+          tickvals: [0, 1, 2, 3],
+          ticktext: ['Normal', 'Low', 'Medium', 'High']
+        },
+        shapes: [
+          { type: 'rect', xref: 'paper', yref: 'y', x0: 0, y0: -0.5, x1: 1, y1: 0.5, fillcolor: 'green', opacity: 0.3, line: { width: 0 } },
+          { type: 'rect', xref: 'paper', yref: 'y', x0: 0, y0: 0.5, x1: 1, y1: 1.5, fillcolor: 'yellow', opacity: 0.3, line: { width: 0 } },
+          { type: 'rect', xref: 'paper', yref: 'y', x0: 0, y0: 1.5, x1: 1, y1: 2.5, fillcolor: 'orange', opacity: 0.3, line: { width: 0 } },
+          { type: 'rect', xref: 'paper', yref: 'y', x0: 0, y0: 2.5, x1: 1, y1: 3.5, fillcolor: 'red', opacity: 0.3, line: { width: 0 } }
+        ]
+      };
+    Plotly.newPlot('riskPlot', [trace], layout);
+  </script>
 {% endblock %}
 
-{% block content2 %}
-    <script>
-        // Line Plots
-        createLinePlot('temperaturePlot', {{ timestamps|default:"[]"|safe }}, {{ temperatures|default:"[]"|safe }}, 'Time', 'Temp (°C)', 'Environment Temperature');
-        createLinePlot('humidityPlot', {{ timestamps|default:"[]"|safe }}, {{ humidity_values|default:"[]"|safe }}, 'Time', 'Humidity (%)', 'Humidity');
-        createLinePlot('bodyTempPlot', {{ timestamps|default:"[]"|safe }}, {{ body_temps|default:"[]"|safe }}, 'Time', 'Body Temp (°C)', 'Body Temperature');
-        createLinePlot('heartRatePlot', {{ timestamps|default:"[]"|safe }}, {{ heart_rates|default:"[]"|safe }}, 'Time', 'Heart Rate (bpm)', 'Heart Rate');        
-
-        // Risk Plot
-        var trace = {
-            x: {{ timestamps|safe }},
-            y: {{ risks|safe }},
-            mode: 'lines+markers',
-            type: 'scatter'
-        };
-        var layout = {
-            title: 'Risk',
-            xaxis: { title: 'Time' },
-            yaxis: { title: 'Risk', range: [0, 8], fixedrange: true },
-            shapes: [
-                { type: 'rect', xref: 'paper', yref: 'y', x0: 0, y0: 0, x1: 1, y1: 2, fillcolor: 'green', opacity: 0.3, line: { width: 0 } },
-                { type: 'rect', xref: 'paper', yref: 'y', x0: 0, y0: 2, x1: 1, y1: 4, fillcolor: 'yellow', opacity: 0.3, line: { width: 0 } },
-                { type: 'rect', xref: 'paper', yref: 'y', x0: 0, y0: 4, x1: 1, y1: 6, fillcolor: 'orange', opacity: 0.3, line: { width: 0 } },
-                { type: 'rect', xref: 'paper', yref: 'y', x0: 0, y0: 6, x1: 1, y1: 8, fillcolor: 'red', opacity: 0.3, line: { width: 0 } }
-            ]
-        };
-        Plotly.newPlot('riskPlot', [trace], layout);
-
-        // Combined Temperature Plot
-        Plotly.newPlot('combinedTempPlot', {{ combined_plot|safe }});
-        Plotly.newPlot('allPlot', {{ all_plot|safe }});
-
-        // Date Picker
-        flatpickr(".datepicker", { dateFormat: "Y-m-d" });
-
-        // Apply Button Event Handlers
-        document.getElementById("applyToday").addEventListener("click", function() {
-            var today = new Date();
-            var formattedDate = today.toISOString().split('T')[0];
-            window.location.href = window.location.pathname + "?startDate=" + formattedDate + "&endDate=" + formattedDate;
-        });
-
-        document.getElementById("applyThisWeek").addEventListener("click", function() {
-            var today = new Date();
-            var sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-            var formattedStartDate = sevenDaysAgo.toISOString().split('T')[0];
-            var formattedEndDate = today.toISOString().split('T')[0];
-            window.location.href = window.location.pathname + "?startDate=" + formattedStartDate + "&endDate=" + formattedEndDate;
-        });
-
-        document.getElementById("applyDateRange").addEventListener("click", function() {
-            var startDate = document.getElementById("startDate").value;
-            var endDate = document.getElementById("endDate").value;
-            window.location.href = window.location.pathname + "?startDate=" + startDate + "&endDate=" + endDate;
-        });
-    </script>
-{% endblock %}

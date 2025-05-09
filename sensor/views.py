@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -91,13 +91,54 @@ def receive_sensor_data(request):
 #    return render(request, 'sensor_data_form.html', {'form': form})
 #
 
-
 @login_required
 def display_data(request):
+    User = get_user_model()
+    user_id = request.GET.get("user_id")
+
+    # ถ้ามี user_id ที่ส่งมา → ใช้ข้อมูลของ user นั้น
+    if user_id:
+        target_user = get_object_or_404(User, id=user_id)
+    else:
+        target_user = request.user
+
     seven_days_ago = timezone.now() - timedelta(days=7)
     sensor_data = SensorData.objects.filter(
-        user=request.user,
+        user=target_user,
         timestamp__gte=seven_days_ago
     ).order_by("-timestamp")
 
-    return render(request, "sensor/display_data.html", {"sensor_data": sensor_data})
+    # เตรียมข้อมูลสำหรับกราฟ
+    timestamps = [data.timestamp.strftime("%Y-%m-%d %H:%M") for data in sensor_data]
+    heart_rates = [data.heart_rate for data in sensor_data]
+    temperatures = [data.ambient_temperature for data in sensor_data]
+    body_temps = [data.skin_temperature for data in sensor_data]
+    humidity_values = [data.humidity for data in sensor_data]
+    skin_resistances = [data.skin_resistance for data in sensor_data]
+    risks = [map_risk_to_score(data.risk) for data in sensor_data]
+
+    return render(request, "sensor/display_data.html", {
+        "sensor_data": sensor_data,
+        "target_user": target_user,
+        "timestamps": timestamps,
+        "heart_rates": heart_rates,
+        "temperatures": temperatures,
+        "body_temps": body_temps,
+        "humidity_values": humidity_values,
+        "risks": risks
+    })
+
+
+def map_risk_to_score(risk):
+    if not risk:
+        return 0
+    risk = risk.lower()
+    if risk in ["ปกติ", "normal"]:
+        return 0
+    elif risk in ["ต่ำ", "low"]:
+        return 1
+    elif risk in ["กลาง", "medium"]:
+        return 2
+    elif risk in ["สูง", "high"]:
+        return 3
+    return 0

@@ -7,6 +7,9 @@ WORKDIR /app
 # คัดลอกไฟล์จากเครื่องมาสู่ container
 COPY requirements.txt /app/
 
+# Copy the certificate file into the container
+COPY emqxsl-ca.crt /app/emqxsl-ca.crt
+
 # ติดตั้ง dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
